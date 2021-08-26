@@ -1,0 +1,7 @@
+[LookupServer]
+Address = "127.0.0.1:7777"
+[Log]
+Path = "logs"
+Level = "trace"
+MaxAge = 86400000000000
+MaxRotationSize = 1073741824
