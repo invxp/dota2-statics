@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/invxp/dota2-statics/internal/util/redis"
+	"github.com/invxp/dota2-statics/pkg/bot"
 	"github.com/invxp/dota2-statics/pkg/server"
 	"github.com/invxp/dota2-statics/pkg/statics"
 	"io/ioutil"
@@ -21,6 +22,12 @@ func TestMain(m *testing.M) {
 	time.Sleep(time.Second)
 
 	m.Run()
+}
+
+func TestBot(t *testing.T) {
+	b := bot.New(redis.SimpleClient("localhost:6379", "", 3, nil), nil)
+	t.Log(b.ProcessDingMessage("  绑定 1267736 阿布"))
+	t.Log(b.ProcessDingMessage("  哈哈 1267736 阿布"))
 }
 
 func TestPlayer(t *testing.T) {

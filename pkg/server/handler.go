@@ -59,7 +59,7 @@ func (s *Server) authHTTPClientRequest(request *http.Request, response *HTTPServ
 	dbf := &ding.BotFrom{}
 	_ = json.Unmarshal(bytes, dbf)
 
-	s.log("client: %s request: %s, header: %v success, %s", response.ClientIP, request.URL.RequestURI(), request.Header, dbf.Text.Content)
+	s.log("client: %s request: %s, header: %v success, %s", response.ClientIP, request.URL.RequestURI(), request.Header,  convert.ByteToString(bytes))
 
 	return dbf.Text.Content
 }
@@ -98,10 +98,38 @@ func (s *Server) handleMatch(writer http.ResponseWriter, request *http.Request) 
 	response.MatchInfo = &match
 }
 
-func (s *Server) log(format string, v ...interface{}) {
-	if s.logger == nil {
-		fmt.Printf(format, v...)
-	} else {
-		s.logger.Printf(format, v...)
+func (s *Server) handleBot(writer http.ResponseWriter, request *http.Request) {
+	response := buildHTTPServerResponse()
+	defer writeHTTPResponse(writer, response)
+	dingContent := s.authHTTPClientRequest(request, response)
+	if response.Code > 0 {
+		return
+	}
+
+	token := request.Header.Get("Token")
+
+	response.MsgType = "markdown"
+	response.Markdown = &ding.Markdown{Title: "谢猪猪", Text: ""}
+
+	if token != s.dingAuth {
+		response.Markdown.Text = "没有访问权限[嘿嘿]"
+		return
+	}
+
+	response.Markdown.Text = s.bot.ProcessDingMessage(dingContent)
+}
+
+func (s *Server) handleAddDingToken(writer http.ResponseWriter, request *http.Request) {
+	response := buildHTTPServerResponse()
+	defer writeHTTPResponse(writer, response)
+	s.authHTTPClientRequest(request, response)
+	if response.Code > 0 {
+		return
+	}
+
+	err := s.storeDingTokens(request.URL.Query().Get("id"))
+	if err != nil {
+		response.Code = HTTPServerError
+		response.Message = fmt.Sprintf("%v", err)
 	}
 }
