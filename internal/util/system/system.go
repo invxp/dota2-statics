@@ -1,7 +1,7 @@
 package system
 
 import (
-	"log"
+	"fmt"
 	"os"
 )
 
@@ -12,8 +12,7 @@ import (
 
 func Hostname() string {
 	if hostname, err := os.Hostname(); err != nil {
-		log.Panic(err)
-		return ""
+		return fmt.Sprintf("unknown-%v",err)
 	} else {
 		return hostname
 	}

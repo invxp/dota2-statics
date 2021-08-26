@@ -9,8 +9,15 @@ import (
 
 type Config struct {
 	Server struct {
-		Address string
-		APIKey  string
+		Address  string
+		APIKey   string
+		Rate     uint32
+		DingAuth string
+	}
+	Redis struct {
+		Address  string
+		Database int
+		Password string
 	}
 	Log struct {
 		Path            string

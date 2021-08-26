@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/FZambia/sentinel"
 	"github.com/gomodule/redigo/redis"
-	"log"
-	"os"
+	"github.com/invxp/dota2-statics/internal/util/log"
+
 	"time"
 )
 
@@ -16,7 +16,7 @@ Redis库，支持Sentinel
 
 type Redis struct {
 	p   *redis.Pool
-	log *log.Logger
+	l   *log.Log
 }
 
 func (r *Redis) Do(command string, args ...interface{}) (interface{}, error) {
@@ -35,7 +35,7 @@ func (r *Redis) Do(command string, args ...interface{}) (interface{}, error) {
 
 	_ = conn.Close()
 
-	r.log.Printf("redis do: %s@%v, result: %v@%v", command, args, result, e)
+	r.log("redis do: %s@%v, result: %v@%v", command, args, result, e)
 
 	return result, e
 }
@@ -91,47 +91,39 @@ func connectToRedis(host, pwd string, sentinels []string, sentinelName string, d
 	}
 }
 
-func New(host, password, sentinelName string, sentinels []string, database, maxIdle, maxActive, idleTimeout int, logPath string) *Redis {
-	filePath := fmt.Sprintf("%s", logPath)
-	if err := os.MkdirAll(filePath, 0755); err != nil {
-		log.Panic(err)
-	}
-	fileName := fmt.Sprintf("%s/%s", filePath, "redis.log")
-	file, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0666)
-	if err != nil {
-		log.Panic(err)
-	}
+func SimpleClient(host, password string, database int, log *log.Log) *Redis {
+	return New(host, password, "", nil, database, 3000, 6000, 600, log)
+}
 
-	redisInstance := &Redis{}
-	redisInstance.p = connectToRedis(host, password, sentinels, sentinelName, database, maxIdle, maxActive, idleTimeout)
-	redisInstance.log = log.New(file, "", log.LstdFlags|log.Lshortfile)
+func New(host, password, sentinelName string, sentinels []string, database, maxIdle, maxActive, idleTimeout int, log *log.Log) *Redis {
+	redisInstance := &Redis{connectToRedis(host, password, sentinels, sentinelName, database, maxIdle, maxActive, idleTimeout), log}
 
 	if len(sentinels) > 0 {
-		redisInstance.log.Printf("connect to redis sentinel: %s@%v|%s/%d\n", password, sentinels, sentinelName, database)
+		redisInstance.log("connect to redis sentinel: %s@%v|%s/%d\n", password, sentinels, sentinelName, database)
 	} else {
-		redisInstance.log.Printf("connect to redis host: %s@%s/%d\n", password, host, database)
+		redisInstance.log("connect to redis host: %s@%s/%d\n", password, host, database)
 	}
 
 	if e := redisInstance.Ping(); e != nil {
-		redisInstance.log.Fatalf("redis ping failed: %v\n", e)
+		redisInstance.log("redis ping failed: %v\n", e)
+	}else{
+		redisInstance.log("redis ping success\n")
 	}
-
-	redisInstance.log.Printf("redis ping success\n")
 
 	go func() {
 		totalFault := 0
 		for {
 			if e := redisInstance.Ping(); e != nil {
-				redisInstance.log.Printf("redis ping failed: %v\n", e)
+				redisInstance.log("redis ping failed: %v\n", e)
 				totalFault++
 			} else {
 				if totalFault > 0 {
-					redisInstance.log.Printf("redis ping recover\n")
+					redisInstance.log("redis ping recover\n")
 				}
 				totalFault = 0
 			}
 			if totalFault > 10 {
-				redisInstance.log.Fatalf("redis ping fatal exit")
+				redisInstance.log("redis ping fatal exit")
 			}
 			time.Sleep(time.Second * 30)
 		}
@@ -142,4 +134,12 @@ func New(host, password, sentinelName string, sentinels []string, database, maxI
 
 func (r *Redis) Stop() {
 	_ = r.p.Close()
+}
+
+func (r *Redis) log(format string, v ...interface{}) {
+	if r.l == nil {
+		fmt.Printf(format, v...)
+	}else{
+		r.l.Printf(format, v...)
+	}
 }

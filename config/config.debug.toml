@@ -1,7 +1,13 @@
-[LookupServer]
+[Server]
 Address = "127.0.0.1:7777"
+APIKey = "E09635A9F555CE8F0B0CCEECE8E40434"
+Rate = 1000
+DingAuth = "InvidentXp"
+[Redis]
+Address = "127.0.0.1:6379"
+Password = "123"
+Database = 3
 [Log]
 Path = "logs"
-Level = "trace"
 MaxAge = 86400000000000
 MaxRotationSize = 1073741824
