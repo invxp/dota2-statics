@@ -84,7 +84,11 @@ func (s *Server) processPlayer(nickname, history string) string {
 	rank := *player.Rank
 	//Rank
 	mdContent += fmt.Sprintf("**绝活英雄**\n\n")
-	for i := 0; i < 10; i++ {
+	n := 10
+	if len(rank) < 10 {
+		n = len(rank)
+	}
+	for i := 0; i < n; i++ {
 		_, heroStat := s.statics.HeroIDToName(rank[i].HeroID)
 		mdContent += fmt.Sprintf("![avatar](https://steamcdn-a.akamaihd.net/%s)", heroStat.Icon)
 	}
@@ -92,7 +96,11 @@ func (s *Server) processPlayer(nickname, history string) string {
 
 	hero := *player.Hero
 	mdContent += fmt.Sprintf("**最爱英雄**\n\n")
-	for i := 0; i < 10; i++ {
+	n = 10
+	if len(hero) < 10 {
+		n = len(hero)
+	}
+	for i := 0; i < n; i++ {
 		num, _ := strconv.Atoi(hero[i].HeroID)
 		_, heroStat := s.statics.HeroIDToName(num)
 		mdContent += fmt.Sprintf("![avatar](https://steamcdn-a.akamaihd.net/%s)", heroStat.Icon)
@@ -107,7 +115,11 @@ func (s *Server) processPlayer(nickname, history string) string {
 	singleWin := float32(0)
 	partyWin := float32(0)
 	totalWin := float32(0)
-	for i := 0; i < 10; i++ {
+	n = 10
+	if len(match) < 10 {
+		n = len(match)
+	}
+	for i := 0; i < n; i++ {
 		heroName, heroStat := s.statics.HeroIDToName(match[i].HeroID)
 		win := (match[i].PlayerSlot <= 127 && match[i].RadiantWin) || (match[i].PlayerSlot > 127 && !match[i].RadiantWin)
 		winStr := "负"
@@ -138,15 +150,16 @@ func (s *Server) processPlayer(nickname, history string) string {
 
 	mdContent += "\n\n最佳队友\n"
 
+	n = 10
+	if len(friends) < 10 {
+		n = len(friends)
+	}
+
 	for i := 0; i < 10; i++ {
 		mdContent += fmt.Sprintf("\n\n![avatar](%s)%s(%d),胜率: %.2f%%\n", friends[i].Avatar, friends[i].Personaname, friends[i].AccountID, float32(friends[i].WithWin)/float32(friends[i].WithGames)*100.00)
 	}
 
-	for _, v := range friends {
-		fmt.Printf("%+v\n", v)
-	}
-
-	s.PublishMessages(mdContent)
+	//s.PublishMessages(mdContent)
 
 	return mdContent
 }
