@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/invxp/dota2-statics/internal/util/log"
 	"github.com/invxp/dota2-statics/internal/util/redis"
-	"github.com/invxp/dota2-statics/pkg/bot"
 	"github.com/invxp/dota2-statics/pkg/statics"
 	"github.com/invxp/tokenbucket"
 	"net/http"
@@ -24,11 +23,18 @@ type Server struct {
 	tokenBucket *tokenbucket.TokenBucket
 	statics     *statics.D2Statics
 	dingAuth    string
-	bot         *bot.Bot
+	serverAddr  string
+	functions   map[string]func([]string) string
 }
 
 func Start(serverAddr string, log *log.Log, db *redis.Redis, rate uint32, statics *statics.D2Statics, dingAuth string) *Server {
-	srv := &Server{log, db, tokenbucket.NewTokenBucket(time.Second, rate), statics, dingAuth, bot.New(db, log)}
+	srv := &Server{log, db, tokenbucket.NewTokenBucket(time.Second, rate), statics, dingAuth, serverAddr, make(map[string]func([]string) string)}
+
+	srv.functions["绑定"] = srv.bind
+	srv.functions["解绑"] = srv.unbind
+	srv.functions["玩家"] = srv.player
+	srv.functions["比赛"] = srv.match
+	srv.functions["统计"] = srv.static
 
 	http.HandleFunc(Player, srv.handlePlayer)
 	http.HandleFunc(Match, srv.handleMatch)
@@ -36,7 +42,7 @@ func Start(serverAddr string, log *log.Log, db *redis.Redis, rate uint32, static
 	http.HandleFunc(AddDingToken, srv.handleAddDingToken)
 
 	go func() {
-		log.Printf("http server stop: %v", http.ListenAndServe(serverAddr, nil))
+		log.Printf("http server stop: %v", http.ListenAndServe(srv.serverAddr, nil))
 	}()
 
 	return srv

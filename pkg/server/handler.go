@@ -59,7 +59,7 @@ func (s *Server) authHTTPClientRequest(request *http.Request, response *HTTPServ
 	dbf := &ding.BotFrom{}
 	_ = json.Unmarshal(bytes, dbf)
 
-	s.log("client: %s request: %s, header: %v success, %s", response.ClientIP, request.URL.RequestURI(), request.Header,  convert.ByteToString(bytes))
+	s.log("client: %s request: %s, header: %v success, %s", response.ClientIP, request.URL.RequestURI(), request.Header, convert.ByteToString(bytes))
 
 	return dbf.Text.Content
 }
@@ -116,7 +116,7 @@ func (s *Server) handleBot(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	response.Markdown.Text = s.bot.ProcessDingMessage(dingContent)
+	response.Markdown.Text = s.ProcessDingMessage(dingContent)
 }
 
 func (s *Server) handleAddDingToken(writer http.ResponseWriter, request *http.Request) {

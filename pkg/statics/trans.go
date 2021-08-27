@@ -23,6 +23,19 @@ func rank(id int) string {
 	return rankName[id/10]
 }
 
+func (d *D2Statics) parseHeroStat() {
+	hStats, _, err := d.odClient.HeroStatService.HeroStats()
+
+	if err != nil {
+		d.log("parse hero stat error: %v", err)
+		return
+	}
+
+	for _, hero := range hStats {
+		d.heroStat[hero.HeroID] = hero
+	}
+}
+
 func parseHeroes() map[int]string {
 	type Hero struct {
 		ID   int    `json:"id"`

@@ -11,19 +11,21 @@ import (
 )
 
 const (
-	steamID64 = 76561197960265728
+	SteamID64 = 76561197960265728
 )
 
 type D2Statics struct {
 	odClient *opendota.Client
 	stClient *dota2.Dota2api
 	logger   *log.Log
-	h        map[int]string
+	heroName map[int]string
+	heroStat map[int]opendota.HeroStat
 }
 
 func New(apiKey string, log *log.Log) *D2Statics {
-	d2s := &D2Statics{opendota.NewClient(&http.Client{}), dota2.NewApi(&http.Client{}), log, parseHeroes()}
+	d2s := &D2Statics{opendota.NewClient(&http.Client{}), dota2.NewApi(&http.Client{}), log, parseHeroes(), make(map[int]opendota.HeroStat)}
 	d2s.stClient.SetApiKey(apiKey)
+	d2s.parseHeroStat()
 	return d2s
 }
 
@@ -130,17 +132,17 @@ func (d *D2Statics) log(format string, v ...interface{}) {
 func (d *D2Statics) convertSteamIds(id int64) (steamID string, D2ID string, nSteamID int64, nD2ID int64) {
 	nD2ID, nSteamID = id, id
 
-	if nD2ID > steamID64 {
-		nD2ID -= steamID64
+	if nD2ID > SteamID64 {
+		nD2ID -= SteamID64
 	}
 
-	if nSteamID < steamID64 {
-		nSteamID += steamID64
+	if nSteamID < SteamID64 {
+		nSteamID += SteamID64
 	}
 
 	return convert.I64toA(nSteamID), convert.I64toA(nD2ID), nSteamID, nD2ID
 }
 
-func (d *D2Statics) HeroIDToName(id int) string {
-	return d.h[id]
+func (d *D2Statics) HeroIDToName(id int) (string, opendota.HeroStat) {
+	return d.heroName[id], d.heroStat[id]
 }
