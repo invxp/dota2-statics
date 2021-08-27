@@ -165,7 +165,7 @@ func (s *Server) processPlayer(nickname, history string) string {
 		mdContent += fmt.Sprintf("\n\n![avatar](%s)<font color=#0F52BA size=2 style=\"font-weight:bold\">%s(%d)%d/%.2f%%\n</font>", friends[i].Avatar, friends[i].Personaname, friends[i].AccountID, friends[i].WithGames, float32(friends[i].WithWin)/float32(friends[i].WithGames)*100.00)
 	}
 
-	s.PublishMessages(mdContent)
+	//s.PublishMessages(mdContent)
 
 	return mdContent
 }
