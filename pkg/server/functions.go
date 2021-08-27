@@ -102,35 +102,51 @@ func (s *Server) processPlayer(nickname, history string) string {
 	match := *player.Matches
 
 	matchResult := ""
-	wrs := float32(0)
-	wrt := float32(0)
+	singleTotal := float32(0)
+	partyTotal := float32(0)
+	singleWin := float32(0)
+	partyWin := float32(0)
+	totalWin := float32(0)
 	for i := 0; i < 10; i++ {
 		heroName, heroStat := s.statics.HeroIDToName(match[i].HeroID)
 		win := (match[i].PlayerSlot <= 127 && match[i].RadiantWin) || (match[i].PlayerSlot > 127 && !match[i].RadiantWin)
 		winStr := "负"
+
+		if match[i].PartySize > 1 {
+			partyTotal++
+		} else {
+			singleTotal++
+		}
+
 		if win {
+			totalWin++
 			if match[i].PartySize > 1 {
-				wrt++
+				partyWin++
 			} else {
-				wrs++
+				singleWin++
 			}
 			winStr = "胜"
 		}
+
 		matchResult += fmt.Sprintf("\n\n%s-%s(%s-%d分钟)\n- KDA:%d/%d/%d\n", fmt.Sprintf("![avatar](https://steamcdn-a.akamaihd.net/%s)", heroStat.Icon), heroName, winStr, match[i].Duration/60, match[i].Kills, match[i].Deaths, match[i].Assists)
 	}
 
-	mdContent += fmt.Sprintf("近期战况: **单排/组排/总胜率(%.2f%%/%.2f%%/%.2f%%)**", wrs/10*100.00, wrt/10*100.00, wrs/10*100.00+wrt/10*100.00)
+	mdContent += fmt.Sprintf("最近10场胜率: **单排/组排/总(%.2f%%/%.2f%%/%.2f%%)**", (singleWin/singleTotal)*100.00, (partyWin/partyTotal)*100.00, (totalWin)/10*100.00)
 	mdContent += matchResult
 
 	friends := *player.Friends
 
-	mdContent += "\n\n最佳队友"
+	mdContent += "\n\n最佳队友\n"
 
 	for i := 0; i < 10; i++ {
 		mdContent += fmt.Sprintf("\n\n![avatar](%s)%s(%d),胜率: %.2f%%\n", friends[i].Avatar, friends[i].Personaname, friends[i].AccountID, float32(friends[i].WithWin)/float32(friends[i].WithGames)*100.00)
 	}
 
-	//s.PublishMessages(mdContent)
+	for _, v := range friends {
+		fmt.Printf("%+v\n", v)
+	}
+
+	s.PublishMessages(mdContent)
 
 	return mdContent
 }

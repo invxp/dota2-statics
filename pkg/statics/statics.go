@@ -8,6 +8,7 @@ import (
 	"github.com/jasonodonnell/go-opendota"
 	"net/http"
 	"sort"
+	"sync"
 )
 
 const (
@@ -45,66 +46,110 @@ func (d *D2Statics) Match(matchID string) (Match, error) {
 }
 
 func (d *D2Statics) Player(accountID string) (Player, error) {
+	var errors error
 	player := Player{}
 	_, _, _, d2ID := d.convertSteamIds(convert.AtoI64(accountID))
-	info, _, err := d.odClient.PlayerService.Player(d2ID)
-	if err != nil {
-		return player, err
-	}
-	if info.Profile.AccountID == 0 {
-		return player, fmt.Errorf("player id: %s info not found", accountID)
-	}
-	player.Info = &info
-	player.Tire = rank(info.RankTier)
+	wg := &sync.WaitGroup{}
 
-	rk, _, _ := d.odClient.PlayerService.Rankings(d2ID)
-	if len(rk) == 0 {
-		return player, fmt.Errorf("player id: %s rank not found", accountID)
-	}
-	sort.Sort(RankScoreSort(rk))
-	player.Rank = &rk
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		info, _, err := d.odClient.PlayerService.Player(d2ID)
+		if err != nil {
+			errors = err
+			return
+		}
+		if info.Profile.AccountID == 0 {
+			errors = fmt.Errorf("玩家基础信息未找到, ID: %s", accountID)
+			return
+		}
+		player.Info = &info
+		player.Tire = rank(info.RankTier)
+	}()
 
-	he, _, err := d.odClient.PlayerService.Heroes(d2ID, nil)
-	if err != nil {
-		return player, err
-	}
-	if len(he) == 0 {
-		return player, fmt.Errorf("player id: %s hero not found", accountID)
-	}
-	sort.Sort(HeroGamesSort(he))
-	player.Hero = &he
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		rk, _, _ := d.odClient.PlayerService.Rankings(d2ID)
+		if len(rk) == 0 {
+			errors = fmt.Errorf("玩家排名信息未找到, ID: %s", accountID)
+			return
+		}
+		sort.Sort(RankScoreSort(rk))
+		player.Rank = &rk
+	}()
 
-	p, _, err := d.odClient.PlayerService.Peers(d2ID, nil)
-	if err != nil {
-		return player, err
-	}
-	if len(p) == 0 {
-		return player, fmt.Errorf("player id: %s friends not found", accountID)
-	}
-	sort.Sort(PeerGamesSort(p))
-	player.Friends = &p
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		he, _, err := d.odClient.PlayerService.Heroes(d2ID, nil)
+		if err != nil {
+			errors = err
+			return
+		}
+		if len(he) == 0 {
+			errors = fmt.Errorf("玩家英雄信息未找到, ID: %s", accountID)
+			return
+		}
+		sort.Sort(HeroGamesSort(he))
+		player.Hero = &he
+	}()
 
-	m, _, err := d.odClient.PlayerService.RecentMatches(d2ID)
-	if err != nil {
-		return player, err
-	}
-	if len(m) == 0 {
-		return player, fmt.Errorf("player id: %s matches not found", accountID)
-	}
-	player.Matches = &m
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		p, _, err := d.odClient.PlayerService.Peers(d2ID, nil)
+		if err != nil {
+			errors = err
+			return
+		}
+		if len(p) == 0 {
+			errors = fmt.Errorf("玩家英雄信息未找到, ID: %s", accountID)
+			return
+		}
+		sort.Sort(PeerGamesSort(p))
+		player.Friends = &p
+	}()
 
-	val, _, _ := d.odClient.PlayerService.Totals(d2ID, nil)
-	if len(val) == 0 {
-		return player, fmt.Errorf("player id: %s values not found", accountID)
-	}
-	player.Val = &val
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		m, _, err := d.odClient.PlayerService.RecentMatches(d2ID)
+		if err != nil {
+			errors = err
+			return
+		}
+		if len(m) == 0 {
+			errors = fmt.Errorf("玩家比赛信息未找到, ID: %s", accountID)
+			return
+		}
+		player.Matches = &m
+	}()
 
-	wl, _, err := d.odClient.PlayerService.WinLoss(d2ID, nil)
-	if err != nil {
-		return player, err
-	}
-	player.WinLose = &wl
-	return player, err
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		val, _, _ := d.odClient.PlayerService.Totals(d2ID, nil)
+		if len(val) == 0 {
+			errors = fmt.Errorf("玩家统计信息未找到, ID: %s", accountID)
+			return
+		}
+		player.Val = &val
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		wl, _, err := d.odClient.PlayerService.WinLoss(d2ID, nil)
+		if err != nil {
+			errors = err
+			return
+		}
+		player.WinLose = &wl
+	}()
+
+	wg.Wait()
+	return player, errors
 }
 
 /*
