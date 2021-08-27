@@ -143,7 +143,7 @@ func (s *Server) processPlayer(nickname, history string) string {
 		matchResult += fmt.Sprintf("\n\n%s-%s(%s-%d分钟)\n- KDA:%d/%d/%d\n", fmt.Sprintf("![avatar](https://steamcdn-a.akamaihd.net/%s)", heroStat.Icon), heroName, winStr, match[i].Duration/60, match[i].Kills, match[i].Deaths, match[i].Assists)
 	}
 
-	mdContent += fmt.Sprintf("最近10场胜率: **单排/组排/总(%.2f%%/%.2f%%/%.2f%%)**", (singleWin/singleTotal)*100.00, (partyWin/partyTotal)*100.00, (totalWin)/10*100.00)
+	mdContent += fmt.Sprintf("最近%d场胜率: **单排/组排/总(%.2f%%/%.2f%%/%.2f%%)**", n, (singleWin/singleTotal)*100.00, (partyWin/partyTotal)*100.00, (totalWin)/float32(n)*100.00)
 	mdContent += matchResult
 
 	friends := *player.Friends
@@ -155,7 +155,7 @@ func (s *Server) processPlayer(nickname, history string) string {
 		n = len(friends)
 	}
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < n; i++ {
 		mdContent += fmt.Sprintf("\n\n![avatar](%s)%s(%d),胜率: %.2f%%\n", friends[i].Avatar, friends[i].Personaname, friends[i].AccountID, float32(friends[i].WithWin)/float32(friends[i].WithGames)*100.00)
 	}
 
