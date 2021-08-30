@@ -34,7 +34,7 @@ func Start(serverAddr string, log *log.Log, db *redis.Redis, rate uint32, static
 	srv.functions["解绑"] = srv.unbind
 	srv.functions["玩家"] = srv.player
 	srv.functions["比赛"] = srv.match
-	srv.functions["统计"] = srv.static
+	srv.functions["队友"] = srv.friend
 
 	http.HandleFunc(Player, srv.handlePlayer)
 	http.HandleFunc(Match, srv.handleMatch)

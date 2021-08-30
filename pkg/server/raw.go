@@ -9,8 +9,8 @@ var (
 		"绑定玩家账号: '绑定 游戏数字ID 昵称'",
 		"解绑玩家账号: '解绑 昵称'",
 		"查询玩家信息: '玩家 游戏数字ID 或 昵称'",
+		"查询队友信息: '队友 游戏数字ID 或 昵称'",
 		"查询比赛信息: '比赛 比赛数字ID 或 昵称'",
-		"统计当前信息: '统计'",
 	}
 )
 
@@ -58,6 +58,9 @@ func (s *Server) match(contents []string) string {
 	return s.processMatch(contents[1])
 }
 
-func (s *Server) static(contents []string) string {
-	return s.processStatics(contents[0])
+func (s *Server) friend(contents []string) string {
+	if len(contents) != 2 {
+		return notFound()
+	}
+	return s.processFriend(contents[1], s.findBinds(contents[1]))
 }

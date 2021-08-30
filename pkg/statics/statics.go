@@ -107,6 +107,7 @@ func (d *D2Statics) Player(accountID string) (Player, error) {
 			errors = fmt.Errorf("玩家英雄信息未找到, ID: %s", accountID)
 			return
 		}
+
 		sort.Sort(PeerGamesSort(p))
 		player.Friends = &p
 	}()

@@ -19,7 +19,7 @@ func (s HeroGamesSort) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 type PeerGamesSort []opendota.PlayerPeers
 
 func (s PeerGamesSort) Len() int           { return len(s) }
-func (s PeerGamesSort) Less(i, j int) bool { return s[i].Games > s[j].Games }
+func (s PeerGamesSort) Less(i, j int) bool { return s[i].WithGames > s[j].WithGames }
 func (s PeerGamesSort) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 type Match struct {

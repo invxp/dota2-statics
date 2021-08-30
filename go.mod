@@ -15,4 +15,5 @@ require (
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/robfig/cron v1.2.0
+	github.com/stretchr/testify v1.5.1
 )
