@@ -2,8 +2,18 @@ package server
 
 import (
 	"fmt"
+	"github.com/jasonodonnell/go-opendota"
+	"sort"
 	"strconv"
 )
+
+type HeroWLSort []opendota.PlayerHero
+
+func (s HeroWLSort) Len() int { return len(s) }
+func (s HeroWLSort) Less(i, j int) bool {
+	return float32(s[i].Win)/float32(s[i].Games)*100.00 > float32(s[j].Win)/float32(s[j].Games)*100.00
+}
+func (s HeroWLSort) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
 func (s *Server) processBind(id, nickname, history string) string {
 	if history != "" {
@@ -142,7 +152,7 @@ func (s *Server) processPlayer(nickname, accountID string) string {
 
 	rank := *player.Rank
 
-	mdContent += fmt.Sprintf("<font color=#64C9CF size=2 style=\"font-weight:bold\">绝活英雄</font>\n\n")
+	mdContent += fmt.Sprintf("<font color=#64C9CF size=2 style=\"font-weight:bold\">榜上英雄</font>\n\n")
 	n = 10
 	if len(rank) < 10 {
 		n = len(rank)
@@ -159,11 +169,32 @@ func (s *Server) processPlayer(nickname, accountID string) string {
 	if len(hero) < 10 {
 		n = len(hero)
 	}
+	j := n / 2
+	if n >= 10 && j < 10 {
+		j = 10
+	}
+	if n < 10 {
+		j = n
+	}
 	for i := 0; i < n; i++ {
 		num, _ := strconv.Atoi(hero[i].HeroID)
 		_, heroStat := s.statics.HeroIDToName(num)
 		mdContent += fmt.Sprintf("![avatar](https://steamcdn-a.akamaihd.net/%s)", heroStat.Icon)
 	}
+
+	var heroes []opendota.PlayerHero
+	for i := 0; i < j; i++ {
+		heroes = append(heroes, hero[i])
+	}
+
+	sort.Sort(HeroWLSort(heroes))
+	mdContent += fmt.Sprintf("\n\n<font color=#64C9CF size=2 style=\"font-weight:bold\">绝活英雄</font>\n\n")
+	for i := 0; i < len(heroes); i++ {
+		num, _ := strconv.Atoi(heroes[i].HeroID)
+		_, heroStat := s.statics.HeroIDToName(num)
+		mdContent += fmt.Sprintf("![avatar](https://steamcdn-a.akamaihd.net/%s)", heroStat.Icon)
+	}
+
 	mdContent += "\n\n"
 
 	friends := *resp.PlayerInfo.Friends

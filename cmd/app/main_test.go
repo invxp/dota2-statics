@@ -60,90 +60,18 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-func complexStr(n1, n2 string) string {
-	var r rune
-	var ret string
-
-	if len(n1) < 1 || len(n2) < 1 {
-		return ""
-	}
-
-	if n1 == "1" {
-		return n2
-	}
-
-	if n2 == "1" {
-		return n1
-	}
-
-	if n1 == "0" || n2 == "0" {
-		return "0"
-	}
-
-	// 找负数
-	comp := (n1[0] == '-') == (n2[0] == '-')
-
-	if n1[0] == '-' {
-		n1 = n1[1:]
-	}
-	if n2[0] == '-' {
-		n2 = n2[1:]
-	}
-
-	tmp := map[int]rune{}
-	i := 0
-
-	// 逐位相乘，错位相加
-	for _, a := range n1 {
-		j := 0
-		for _, b := range n2 {
-			tmp[i+j] += (a - '0') * (b - '0')
-			j++
-		}
-		i++
-	}
-
-	// 倒着连接字符串
-	for i := len(tmp) - 1; i >= 0; i-- {
-		tmp[i] += r
-		r = tmp[i] / 10
-		ret = string([]rune{tmp[i]%10 + '0'}) + ret
-	}
-
-	if r != 0 {
-		ret = string([]rune{r + '0'}) + ret
-	}
-
-	if comp {
-		return ret
-	}
-	return "-" + ret
-}
-
 func TestBot(t *testing.T) {
-	/*
-		require.Equal(t, strconv.Itoa(5*6), complexStr("5", "6"))
-		require.Equal(t, strconv.Itoa(-15*6), complexStr("-15", "6"))
-		require.Equal(t, strconv.Itoa(-15*-3), complexStr("-15", "-3"))
-		require.Equal(t, strconv.Itoa(1*1), complexStr("1", "1"))
-		require.Equal(t, strconv.Itoa(1*2), complexStr("1", "2"))
-		require.Equal(t, strconv.Itoa(1*0), complexStr("1", "0"))
-		require.Equal(t, strconv.Itoa(0*1), complexStr("0", "1"))
-		require.Equal(t, strconv.Itoa(666*777), complexStr("666", "777"))
-	*/
-
-	fakeBot(t, "解绑 爸爸")
-	fakeBot(t, "解绑 阿猫")
-	fakeBot(t, "绑定 136700549 阿猫")
-	fakeBot(t, "绑定 6666 阿猫")
+	//fakeBot(t, "解绑 爸爸")
+	//fakeBot(t, "解绑 阿猫")
+	//fakeBot(t, "绑定 136700549 阿猫")
+	//fakeBot(t, "绑定 6666 阿猫")
 	//fakeBot(t, "玩家 阿猫")
 	fakeBot(t, "玩家 136700549")
-	fakeBot(t, "队友 136700549")
+	//fakeBot(t, "队友 136700549")
 
-	fakeBot(t, "玩家 4445")
-	fakeBot(t, "比赛 4445")
-	fakeBot(t, "比赛 3559037317")
-
+	//fakeBot(t, "玩家 4445")
+	//fakeBot(t, "比赛 4445")
+	//fakeBot(t, "比赛 3559037317")
 }
 
 func TestPlayer(t *testing.T) {
