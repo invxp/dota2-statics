@@ -85,10 +85,11 @@ func (s *Server) processPlayer(nickname, accountID string) string {
 	if len(match) < 10 {
 		n = len(match)
 	}
+	var winLose []string
 	for i := 0; i < n; i++ {
 		_, heroStat := s.statics.HeroIDToName(match[i].HeroID)
 		win := (match[i].PlayerSlot <= 127 && match[i].RadiantWin) || (match[i].PlayerSlot > 127 && !match[i].RadiantWin)
-		_ = "负"
+		wLose := "<font color=#FF4848 size=3 style=\"font-weight:bold\">负</font>"
 
 		if match[i].PartySize > 1 {
 			partyTotal++
@@ -103,9 +104,11 @@ func (s *Server) processPlayer(nickname, accountID string) string {
 			} else {
 				singleWin++
 			}
-			_ = "胜"
+			wLose = "<font color=#28DF99 size=3 style=\"font-weight:bold\">胜</font>"
 		}
+
 		matchResult += fmt.Sprintf("%s", fmt.Sprintf("![avatar](https://steamcdn-a.akamaihd.net/%s)", heroStat.Icon))
+		winLose = append(winLose, wLose+"&nbsp;&nbsp;&nbsp;&nbsp;")
 	}
 
 	if singleTotal == 0 {
@@ -121,7 +124,7 @@ func (s *Server) processPlayer(nickname, accountID string) string {
 		wl = float32(player.WinLose.Win) / float32(player.WinLose.Win+player.WinLose.Lose) * 100.00
 	}
 
-	mdContent := fmt.Sprintf("![avatar](%s)\n\n<font color=#FF4848 size=2 style=\"font-weight:bold\">玩家信息: %s(%s)-%s\n\n综合能力: %d(整体胜率%.2f%%)\n\nAPM: %d / GPM: %d / KDA: %.2f\n\n%s\n\n%s\n\n</font>",
+	mdContent := fmt.Sprintf("![avatar](%s)\n\n<font color=#FF4848 size=2 style=\"font-weight:bold\">玩家信息: %s(%s)-%s\n\n综合能力: %d(整体胜率%.2f%%)\n\nAPM: %d / GPM: %d / KDA: %.2f\n\n%s\n\n%s\n\n%v\n\n</font>",
 		info.Profile.AvatarFull,
 		info.Profile.Personaname,
 		player.Tire,
@@ -134,7 +137,8 @@ func (s *Server) processPlayer(nickname, accountID string) string {
 			(singleWin/singleTotal)*100.00,
 			(partyWin/partyTotal)*100.00,
 			(totalWin)/float32(n)*100.00),
-		matchResult)
+		matchResult,
+		winLose)
 
 	rank := *player.Rank
 
@@ -162,40 +166,11 @@ func (s *Server) processPlayer(nickname, accountID string) string {
 	}
 	mdContent += "\n\n"
 
-	return mdContent
-}
-
-func (s *Server) processMatch(_ string) string {
-	return fmt.Sprintf("查看比赛详情功能正在开发中...")
-}
-
-func (s *Server) processFriend(nickname string, accountID string) string {
-	if accountID == "" {
-		accountID = nickname
-	}
-
-	resp, err := s.loadPlayerInfo(accountID)
-	if err != nil {
-		resp, err = playerInfo("http://"+s.serverAddr, accountID)
-		if err != nil {
-			return fmt.Sprintf("获取玩家: %s 信息失败: %v", nickname, err)
-		}
-		_ = s.storePlayerInfo(accountID, resp)
-	}
-
-	info := resp.PlayerInfo.Info
-
-	mdContent := fmt.Sprintf("![avatar](%s)\n\n<font color=#FF4848 size=2 style=\"font-weight:bold\">玩家信息: %s(%s)-%s\n\n</font>",
-		info.Profile.AvatarFull,
-		info.Profile.Personaname,
-		resp.PlayerInfo.Tire,
-		accountID)
-
 	friends := *resp.PlayerInfo.Friends
 
 	mdContent += "\n\n<font color=#64C9CF size=2 style=\"font-weight:bold\">最佳队友(总场次/胜率)</font>\n"
 
-	n := 10
+	n = 10
 	if len(friends) < 10 {
 		n = len(friends)
 	}
@@ -205,4 +180,8 @@ func (s *Server) processFriend(nickname string, accountID string) string {
 	}
 
 	return mdContent
+}
+
+func (s *Server) processMatch(_ string) string {
+	return fmt.Sprintf("查看比赛详情功能正在开发中...")
 }

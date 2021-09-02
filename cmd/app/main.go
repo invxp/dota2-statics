@@ -7,7 +7,6 @@ import (
 	"github.com/invxp/dota2-statics/internal/util/io"
 	"github.com/invxp/dota2-statics/internal/util/log"
 	"github.com/invxp/dota2-statics/internal/util/redis"
-	"github.com/invxp/dota2-statics/pkg/cron"
 	"github.com/invxp/dota2-statics/pkg/server"
 	"github.com/invxp/dota2-statics/pkg/statics"
 	"os"
@@ -28,8 +27,15 @@ var (
 )
 
 const (
-	appVersion = "0.0.1-alpha"
+	appVersion = "0.0.2-alpha"
 )
+
+func waitExit(log *log.Log) {
+	quitSig := make(chan os.Signal)
+	signal.Notify(quitSig, syscall.SIGINT, syscall.SIGTERM)
+	<-quitSig
+	log.Printf("application exit")
+}
 
 func main() {
 	flag.Parse()
@@ -40,23 +46,15 @@ func main() {
 
 	conf := config.Load(currentPath, *configFile)
 
-	logFile := log.New(currentPath, conf.Log.Path, currentExecutable+".log", conf.Log.MaxAge, conf.Log.MaxRotationSize)
+	logger := log.New(currentPath, conf.Log.Path, currentExecutable+".log", conf.Log.MaxAge, conf.Log.MaxRotationSize)
 
-	logFile.Printf("application started, version: %s, key: %s", appVersion, conf.Server.APIKey)
+	logger.Printf("application started, version: %s, key: %s", appVersion, conf.Server.APIKey)
 
-	server.Start(conf.Server.Address, logFile,
-		redis.SimpleClient(conf.Redis.Address, conf.Redis.Password, conf.Redis.Database, logFile),
+	server.Start(conf.Server.Address, logger,
+		redis.SimpleClient(conf.Redis.Address, conf.Redis.Password, conf.Redis.Database, logger),
 		conf.Server.Rate,
-		statics.New(conf.Server.APIKey, logFile),
+		statics.New(conf.Server.APIKey, logger),
 		conf.Server.DingAuth)
 
-	c := cron.New(logFile)
-	c.Add("0 */10 * * * ?", func() {})
-	c.Start()
-	defer c.Stop()
-
-	quitSig := make(chan os.Signal)
-	signal.Notify(quitSig, syscall.SIGINT, syscall.SIGTERM)
-	<-quitSig
-	logFile.Printf("application exit")
+	waitExit(logger)
 }
